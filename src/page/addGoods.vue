@@ -33,6 +33,8 @@
                   </div>
                   <div class="upload_warp_text">
                     选中{{imgList.length}}张文件，共{{bytesToSize(this.size)}}
+                    <el-button type="warn" style="float:right;margin-right:30px;" @click="clearList()">清空</el-button>
+                    <!-- <a style="float:right;padding:5px 20px 5px 10px;background:red;margin-right:30px;">清空</a> -->
                   </div>
                   <input @change="fileChange($event)" type="file" id="upload_file" multiple style="display: none" accept="image/jpeg,image/x-png,image/gif,image/bmp"/>
                   <div class="upload_warp_img" v-show="imgList.length!=0">
@@ -108,7 +110,9 @@ export default {
     },
     beforeImgUpload(file) {
       const isRightType =
-        file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/jpg";
+        file.type === "image/jpeg" ||
+        file.type === "image/png" ||
+        file.type === "image/jpg";
 
       //图片大小及尺寸的限制
       // const isLt2M = file.size / 1024 / 1024 < 2;
@@ -218,6 +222,11 @@ export default {
         i = Math.floor(Math.log(bytes) / Math.log(k));
       return (bytes / Math.pow(k, i)).toPrecision(3) + " " + sizes[i];
     },
+    clearList() {
+      this.imgList.splice(index, this.imgList.size);
+      this.size = 0; //总大小
+      if (this.limit !== undefined) this.limit = 0;
+    },
 
     addFood(foodForm) {
       //标题
@@ -254,7 +263,8 @@ export default {
         var promise = new Promise((resolve, reject) => {
           axios({
             method: "post",
-            url: "http://192.168.31.37:8080/platform/api/uploadFile",
+            // url: "http://192.168.0.179:8080/platform/api/uploadFile",
+             url: "http://188.131.176.201:8080/platform/api/uploadFile",
             data: param
           }).then(res => {
             if (res.data.code == 0) {
@@ -278,12 +288,13 @@ export default {
           var param = new FormData(); // FormData 对象
           param.append("file", this.file); // 文件对象
           param.append("id", "1"); // 其他参数
-          param.append("status", "1"); // 其他参数
+          param.append("status", "4"); // 其他参数
           param.append("pictures", res.data); // 图片组集合地址
           param.append("title", title); // 图片组集合地址
           axios({
             method: "post",
-            url: "http://192.168.31.37:8080/platform/api/warehousing",
+            // url: "http://192.168.0.179:8080/platform/api/warehousing",
+             url: "http://188.131.176.201:8080/platform/api/warehousing",
             data: param
           }).then(res => {
             if (res.data.code == 0) {
@@ -291,7 +302,7 @@ export default {
                 type: "success",
                 message: "入库成功"
               });
-            }else{
+            } else {
               this.$message.error(res.data.errMsg);
             }
           });
