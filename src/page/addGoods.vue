@@ -14,11 +14,11 @@
 					<el-form-item label="首页展示图片">
 						<el-upload
 						  class="avatar-uploader"
-						  :action="baseUrl + '/v1/addimg/food'"
+						  :action="uploaded()"
 						  :show-file-list="false"
 						  :on-success="uploadImg"
 						  :before-upload="beforeImgUpload">
-						  <img v-if="foodForm.image_path" :src="baseImgPath + foodForm.image_path" class="avatar">
+						  <img v-if="foodForm.image_path" :src="foodForm.image_path" class="avatar">
 						  <i v-else class="el-icon-plus avatar-uploader-icon"></i>
 						</el-upload>
 					</el-form-item>
@@ -67,7 +67,6 @@
 <script>
 import headTop from "@/components/headTop";
 import { getCategory, addCategory, addFood } from "@/api/getData";
-import { baseUrl, baseImgPath } from "@/config/env";
 import axios from "axios";
 export default {
   data() {
@@ -77,8 +76,6 @@ export default {
       limit: undefined,
 
       file: "",
-      baseUrl,
-      baseImgPath,
       restaurant_id: 1,
       categoryForm: {
         categoryList: [],
@@ -102,8 +99,10 @@ export default {
   },
   methods: {
     uploadImg(res, file) {
-      if (res.status == 1) {
-        this.foodForm.image_path = res.image_path;
+      console.log("上传后地址：", res.data.accessUrl);
+
+      if (res.code == 0) {
+        this.foodForm.image_path = res.data.accessUrl;
       } else {
         this.$message.error("上传图片失败！");
       }
@@ -231,6 +230,7 @@ export default {
     addFood(foodForm) {
       //标题
       var title = this.foodForm.name;
+      var image_path = this.foodForm.image_path;
       title = title.replace(/(^\s*)|(\s*$)/g, "");
 
       if (title == "") {
@@ -239,7 +239,7 @@ export default {
       }
 
       //首页显示图片判断
-      if (this.file == "" || typeof this.file === "undefined") {
+      if (image_path == "" || typeof image_path === "undefined") {
         this.$message.error("请选择首页显示的图片");
         return;
       }
@@ -263,8 +263,8 @@ export default {
         var promise = new Promise((resolve, reject) => {
           axios({
             method: "post",
-            // url: "http://192.168.0.179:8080/platform/api/uploadFile",
-             url: "http://188.131.176.201:8080/platform/api/uploadFile",
+            // url: "http://192.168.0.196:8080/platform/api/uploadFile",
+             url: "https://meitu.byte160.com/platform/api/uploadFile",
             data: param
           }).then(res => {
             if (res.data.code == 0) {
@@ -276,7 +276,7 @@ export default {
         });
       }
 
-      //等待异步执行完成后回调，（等同于 同步执行）
+      //等待异步执行完成后回调，（等同于 同步执行）  数据入库
       promise.then(
         res => {
           // 执行成功的回调函数
@@ -284,18 +284,16 @@ export default {
           console.log("图片上传后的地址集：", res.data);
 
           // //首页显示图片上传
-          console.log("文件：", this.file);
-          var param = new FormData(); // FormData 对象
-          param.append("file", this.file); // 文件对象
-          param.append("id", "1"); // 其他参数
-          param.append("status", "4"); // 其他参数
-          param.append("pictures", res.data); // 图片组集合地址
-          param.append("title", title); // 图片组集合地址
           axios({
             method: "post",
-            // url: "http://192.168.0.179:8080/platform/api/warehousing",
-             url: "http://188.131.176.201:8080/platform/api/warehousing",
-            data: param
+            // url: "http://192.168.0.196:8080/platform/api/warehousing",
+             url: "https://meitu.byte160.com/platform/api/warehousing",
+            headers: { "Content-type": "application/json" },
+            data: {
+              pictures: res.data,
+              title: title,
+              imagePath: image_path
+            }
           }).then(res => {
             if (res.data.code == 0) {
               this.$message({
@@ -325,6 +323,9 @@ export default {
       //   url: "http://192.168.31.37:8080/store/api/uploadFile",
       //   data: param
       // });
+    },
+    uploaded() {
+      return "https://meitu.byte160.com/platform/api/uploader";
     }
   }
 };
